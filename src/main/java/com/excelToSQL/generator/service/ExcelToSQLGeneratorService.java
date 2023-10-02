@@ -1,6 +1,7 @@
 package com.excelToSQL.generator.service;
 
-import com.excelToSQL.generator.entity.GenerateUpdateSQLRequest;
+import com.excelToSQL.generator.payload.request.GenerateInsertSQLRequest;
+import com.excelToSQL.generator.payload.request.GenerateUpdateSQLRequest;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
@@ -40,7 +41,7 @@ public class ExcelToSQLGeneratorService {
                     Cell firstRowCell = firstRow.getCell(getColumnIndex(setColumnName));
 
                     if (cell != null && firstRowCell != null) {
-                        updateQuery.append(getColumnName(setColumnName, CellValue(firstRowCell)))
+                        updateQuery.append(getColumnName( CellValue(firstRowCell)))
                                 .append("=")
                                 .append(formatCellValue(cell));
 
@@ -59,7 +60,7 @@ public class ExcelToSQLGeneratorService {
                     Cell cell = currentRow.getCell(getColumnIndex(whereColumnName));
 
                     if (cell != null && firstRowCell != null) {
-                        updateQuery.append(getColumnName(whereColumnName, CellValue(firstRowCell)))
+                        updateQuery.append(getColumnName( CellValue(firstRowCell)))
                                 .append("=")
                                 .append(formatCellValue(cell));
 
@@ -70,6 +71,67 @@ public class ExcelToSQLGeneratorService {
                 }
 
                 sqlBuilder.append(updateQuery).append(";\n");
+            }
+
+            workbook.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return "An error occurred while reading the Excel file.";
+        }
+
+        return sqlBuilder.toString();
+    }
+
+    public String generateInsertSQLFromExcel(GenerateInsertSQLRequest request) {
+        String path = request.getPath();
+        List<String> setValueColumns = request.getValueColumns();
+        String tableName = request.getTableName();
+
+        StringBuilder sqlBuilder = new StringBuilder();
+
+        try (FileInputStream excelFile = new FileInputStream(path)) {
+            Workbook workbook = new XSSFWorkbook(excelFile);
+            Sheet sheet = workbook.getSheetAt(0);
+            Iterator<Row> iterator = sheet.iterator();
+
+            // Read the first row for setColumnNames
+            Row firstRow = iterator.next();
+
+            while (iterator.hasNext()) {
+                Row currentRow = iterator.next();
+                StringBuilder updateQuery = new StringBuilder("INSERT INTO ");
+                updateQuery.append(tableName).append(" (");
+
+                for (int i = 0; i < setValueColumns.size(); i++) {
+                    String setColumnName = setValueColumns.get(i);
+                    Cell cell = currentRow.getCell(getColumnIndex(setColumnName));
+                    Cell firstRowCell = firstRow.getCell(getColumnIndex(setColumnName));
+
+                    if (cell != null && firstRowCell != null) {
+                        updateQuery.append(getColumnName( CellValue(firstRowCell)));
+                        // Add comma for multiple set values, except the last one
+                        if (i < setValueColumns.size() - 1) {
+                            updateQuery.append(", ");
+                        }
+                    }
+                }
+
+                updateQuery.append(") VALUES (");
+
+                for (int i = 0; i < setValueColumns.size(); i++) {
+                    String whereColumnName = setValueColumns.get(i);
+                    Cell firstRowCell = firstRow.getCell(getColumnIndex(whereColumnName));
+                    Cell cell = currentRow.getCell(getColumnIndex(whereColumnName));
+
+                    if (cell != null && firstRowCell != null) {
+                        updateQuery.append(formatCellValue(cell));
+
+                        if (i < setValueColumns.size() - 1) {
+                            updateQuery.append(" , ");
+                        }
+                    }
+                }
+                sqlBuilder.append(updateQuery).append(");\n");
             }
 
             workbook.close();
@@ -101,7 +163,7 @@ public class ExcelToSQLGeneratorService {
         return Character.toUpperCase(columnName.charAt(0)) - 'A';
     }
 
-    private String getColumnName(String column, String value) {
+    private String getColumnName( String value) {
         return value;
     }
 }

@@ -1,6 +1,7 @@
 package com.excelToSQL.generator.controller;
 
-import com.excelToSQL.generator.entity.GenerateUpdateSQLRequest;
+import com.excelToSQL.generator.payload.request.GenerateInsertSQLRequest;
+import com.excelToSQL.generator.payload.request.GenerateUpdateSQLRequest;
 import com.excelToSQL.generator.service.ExcelToSQLGeneratorService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -18,5 +19,10 @@ public class GenerateController {
     @PutMapping("/update-sql")
     public String generateUpdateSQL(@RequestBody GenerateUpdateSQLRequest request) {
         return excelToSQLGeneratorService.generateUpdateSQLFromExcel(request);
+    }
+
+    @PutMapping("/insert-sql")
+    public String generateInsertSQL(@RequestBody GenerateInsertSQLRequest request) {
+        return excelToSQLGeneratorService.generateInsertSQLFromExcel(request);
     }
 }

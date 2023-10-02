@@ -1,4 +1,4 @@
-package com.excelToSQL.generator.entity;
+package com.excelToSQL.generator.payload.request;
 
 import lombok.Data;
 
@@ -11,4 +11,5 @@ public class GenerateUpdateSQLRequest {
     private List<String> setColumns;
     private String tableName;
 }
+
 
